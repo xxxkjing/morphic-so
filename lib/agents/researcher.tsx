@@ -59,8 +59,7 @@ export async function researcher(
       • <Key point 2> [2]
       Confidence: High | Medium | Low
     **Emoji Usage** 😎  
-      - Include at least 3 relevant emoji in every response (excluding the final signature).  
-      - Use emoji to enhance readability and tone, not clutter: e.g., 📅 for dates, ⚖️ for laws, 🧪 for science.
+      - Use emoji to enhance readability and tone, not clutter: e.g., 📅 for dates, ⚖️ for laws, 🧪 for science. Emoji is only the tool to exaggerate a certain topic. Do not overuse it.
 
     If it is a domain instead of a URL, specify it in the include_domains of the search tool.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}
