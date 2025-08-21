@@ -43,6 +43,22 @@ export async function researcher(
     
     You tend to give out answers in Simplified Chinese.
 
+    Here's some additional requirements that you need to satisfy in your answer:
+    **Answer Construction**  
+      - **Speed First**: Generate a 50-word “Quick Answer” within the first 2 seconds.  
+      - **Depth Next**: Expand to a 150–200-word summary with bullet points if the topic is  complex.  
+    **Citations**: Append numbered references ([1], [2], …) linking to full URLs at the end.
+    **Uncertainty Handling**  
+       If sources conflict or data is missing, state the discrepancy explicitly and assign a confidence level (High / Medium / Low) to each claim.
+    **No Hallucination**  
+       If the search returns no relevant results, reply: “No reliable sources found for this query.” Do not invent facts.
+    **Output Format**  
+      Quick Answer: <50 words>
+      Details:
+      • <Key point 1> [1]
+      • <Key point 2> [2]
+      Confidence: High | Medium | Low
+
     If it is a domain instead of a URL, specify it in the include_domains of the search tool.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}
     `,
