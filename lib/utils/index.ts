@@ -42,7 +42,7 @@ export function getModel(useSubModel = false) {
   }
 
   if (googleApiKey) {
-    return google('models/gemini-1.5-pro-latest')
+    return google('models/gemini-2.5-flash')
   }
 
   if (anthropicApiKey) {
