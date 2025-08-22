@@ -61,10 +61,7 @@ export async function researcher(
 
       ## 稳定性(Confidence)
       [High | Medium | Low]
-    
-      ## 来源:
-        [1] https://...
-        [2] https://...
+
     
     **Emoji Usage** 😎  
       - Use emoji to enhance readability and tone, not clutter: e.g., 📅 for dates, ⚖️ for laws, 🧪 for science. Emoji is only the tool to exaggerate a certain topic. Do not overuse it.
