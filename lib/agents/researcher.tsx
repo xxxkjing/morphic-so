@@ -7,7 +7,8 @@ import { AnswerSection } from '@/components/answer-section'
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamableText: ReturnType<typeof createStreamableValue<string>>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
+  apiKey?: string
 ) {
   let fullResponse = ''
   let hasError = false
@@ -29,10 +30,20 @@ export async function researcher(
   const answerSection = <AnswerSection result={streamableAnswer.value} />
 
   const currentDate = new Date().toLocaleString()
-  const result = await streamText({
-    model: getModel(useSubModel),
-    maxTokens: 2500,
-    system: `
+
+  let result: any
+  let attempts = 0
+  const maxAttempts = (process.env.GOOGLE_API_KEYS?.split(',').length || 1) * 2; // Allow for retries
+
+  let successfulApiKey: string | undefined;
+  while (attempts < maxAttempts) {
+    try {
+      const { model, apiKey: newApiKey } = getModel(useSubModel, apiKey);
+      successfulApiKey = newApiKey;
+      result = await streamText({
+        model: model,
+        maxTokens: 2500,
+        system: `
     As a professional search expert, you possess the ability to search for any information on the web.
     For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response, in order to offer the most accurate answer if possible.
     If there are any images relevant to your answer, be sure to include them as well.
@@ -91,11 +102,28 @@ export async function researcher(
       fullResponse = event.text
       streamableAnswer.done()
     }
-  }).catch(err => {
-    hasError = true
-    fullResponse = 'Error: ' + err.message
-    streamableText.update(fullResponse)
-  })
+      });
+      break; // Success, exit loop
+    } catch (err: any) {
+      attempts++;
+      if (err.message && err.message.includes('quota')) {
+        console.warn(`API key failed due to quota limit. Retrying... (${attempts}/${maxAttempts})`);
+        if (attempts >= maxAttempts) {
+          hasError = true;
+          fullResponse = 'Error: All available API keys have exceeded their quota limits.';
+          streamableText.update(fullResponse);
+          break;
+        }
+        continue;
+      } else {
+        // For other errors, break the loop and report the error
+        hasError = true;
+        fullResponse = 'Error: ' + err.message;
+        streamableText.update(fullResponse);
+        break;
+      }
+    }
+  }
 
   // If the result is not available, return an error response
   if (!result) {
@@ -148,5 +176,5 @@ export async function researcher(
     messages.push({ role: 'tool', content: toolResponses })
   }
 
-  return { result, fullResponse, hasError, toolResponses, finishReason }
+  return { result, fullResponse, hasError, toolResponses, finishReason, apiKey: successfulApiKey }
 }

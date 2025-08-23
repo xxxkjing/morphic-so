@@ -6,15 +6,24 @@ import { getModel } from '../utils'
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
+  apiKey?: string
 ) {
   const objectStream = createStreamableValue<PartialInquiry>()
   uiStream.update(<Copilot inquiry={objectStream.value} />)
 
   let finalInquiry: PartialInquiry = {}
-  await streamObject({
-    model: getModel(),
-    system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
+  let attempts = 0
+  const maxAttempts = (process.env.GOOGLE_API_KEYS?.split(',').length || 1) * 2; // Allow for retries
+  let successfulApiKey: string | undefined;
+
+  while (attempts < maxAttempts) {
+    try {
+      const { model, apiKey: newApiKey } = getModel(false, apiKey);
+      successfulApiKey = newApiKey;
+      await streamObject({
+        model: model,
+        system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
     After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.
 
     When crafting your inquiry, structure it as follows:
@@ -53,18 +62,36 @@ export async function inquire(
     `,
     messages,
     schema: inquirySchema
-  })
-    .then(async result => {
-      for await (const obj of result.partialObjectStream) {
-        if (obj) {
-          objectStream.update(obj)
-          finalInquiry = obj
+      })
+        .then(async result => {
+          for await (const obj of result.partialObjectStream) {
+            if (obj) {
+              objectStream.update(obj)
+              finalInquiry = obj
+            }
+          }
+        })
+        .finally(() => {
+          // Do not close the stream here, let the loop handle it.
+        })
+      break; // Success, exit loop
+    } catch (err: any) {
+      attempts++;
+      if (err.message && err.message.includes('quota')) {
+        console.warn(`API key failed due to quota limit. Retrying... (${attempts}/${maxAttempts})`);
+        if (attempts >= maxAttempts) {
+          console.error('Error: All available API keys have exceeded their quota limits.');
+          break;
         }
+        continue;
+      } else {
+        // For other errors, break the loop and report the error
+        console.error('Error in inquire:', err.message);
+        break;
       }
-    })
-    .finally(() => {
-      objectStream.done()
-    })
+    }
+  }
 
-  return finalInquiry
+  objectStream.done();
+  return { ...finalInquiry, apiKey: successfulApiKey }
 }

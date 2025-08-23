@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { createOllama } from 'ollama-ai-provider'
 import { createOpenAI } from '@ai-sdk/openai'
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { anthropic } from '@ai-sdk/anthropic'
 import { CoreMessage } from 'ai'
 
@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getModel(useSubModel = false) {
+export function getModel(useSubModel = false, apiKey?: string) {
   const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + '/api'
   const ollamaModel = process.env.OLLAMA_MODEL
   const ollamaSubModel = process.env.OLLAMA_SUB_MODEL
@@ -35,33 +35,27 @@ export function getModel(useSubModel = false) {
     const ollama = createOllama({ baseURL: ollamaBaseUrl })
 
     if (useSubModel && ollamaSubModel) {
-      return ollama(ollamaSubModel)
+      return { model: ollama(ollamaSubModel) }
     }
 
-    return ollama(ollamaModel)
+    return { model: ollama(ollamaModel) }
   }
 
   // Google Gemini
   if (googleApiKeys.length > 0) {
-    let apiKeyIndex = 0;
-    const getNextApiKey = () => {
-      const apiKey = googleApiKeys[apiKeyIndex % googleApiKeys.length];
-      apiKeyIndex++;
-      return apiKey;
-    };
-
-    let apiKey = getNextApiKey();
-    try {
-      return google('models/gemini-2.5-flash', { apiKey });
-    } catch (error) {
-      console.error('API Key error:', error);
-      apiKey = getNextApiKey();
-      return google('models/gemini-2.5-flash', { apiKey });
+    let selectedApiKey = apiKey;
+    if (!selectedApiKey) {
+      // If no preferred key is provided, select a random one
+      const randomIndex = Math.floor(Math.random() * googleApiKeys.length);
+      selectedApiKey = googleApiKeys[randomIndex];
     }
+    
+    const google = createGoogleGenerativeAI({ apiKey: selectedApiKey });
+    return { model: google('models/gemini-2.5-flash'), apiKey: selectedApiKey };
   }
 
   if (anthropicApiKey) {
-    return anthropic('claude-3-5-sonnet-20240620')
+    return { model: anthropic('claude-3-5-sonnet-20240620') }
   }
 
   // Fallback to OpenAI instead
@@ -72,7 +66,7 @@ export function getModel(useSubModel = false) {
     organization: '' // optional organization
   })
 
-  return openai.chat(openaiApiModel)
+  return { model: openai.chat(openaiApiModel) }
 }
 
 /**

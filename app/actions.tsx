@@ -104,13 +104,23 @@ async function submit(
     // Show the spinner
     uiStream.append(<Spinner />)
 
-    let action = { object: { next: 'proceed' } }
+    let successfulApiKey: string | undefined;
+    let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
-    if (!skip) action = (await taskManager(messages)) ?? action
+    if (!skip) {
+      action = (await taskManager(messages, successfulApiKey)) ?? action
+      if (action.apiKey) {
+        successfulApiKey = action.apiKey;
+      }
+    }
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
-      const inquiry = await inquire(uiStream, messages)
+      const inquiryResult = await inquire(uiStream, messages, successfulApiKey)
+      if (inquiryResult.apiKey) {
+        successfulApiKey = inquiryResult.apiKey;
+      }
+      const inquiry = inquiryResult;
       uiStream.done()
       isGenerating.done()
       isCollapsed.done(false)
@@ -158,8 +168,11 @@ async function submit(
         : (stopReason !== 'stop' || answer.length === 0) && !errorOccurred
     ) {
       // Search the web and generate the answer
-      const { fullResponse, hasError, toolResponses, finishReason } =
-        await researcher(uiStream, streamText, messages)
+      const researcherResult = await researcher(uiStream, streamText, messages, successfulApiKey)
+      if (researcherResult.apiKey) {
+        successfulApiKey = researcherResult.apiKey;
+      }
+      const { fullResponse, hasError, toolResponses, finishReason } = researcherResult;
       stopReason = finishReason || ''
       answer = fullResponse
       toolOutputs = toolResponses
@@ -199,15 +212,13 @@ async function submit(
     }
 
     if (!errorOccurred) {
-      const useGoogleProvider = process.env.GOOGLE_GENERATIVE_AI_API_KEY
       const useOllamaProvider = !!(
         process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
       )
       let processedMessages = messages
-      // If using Google provider, we need to modify the messages
-      if (useGoogleProvider) {
-        processedMessages = transformToolMessages(messages)
-      }
+      // The transformToolMessages is called within the researcher,
+      // so we don't need to call it again here.
+      // We will just use the messages as is.
       if (useOllamaProvider) {
         processedMessages = [{ role: 'assistant', content: answer }]
       }
@@ -227,7 +238,11 @@ async function submit(
       })
 
       // Generate related queries
-      const relatedQueries = await querySuggestor(uiStream, processedMessages)
+      const querySuggestorResult = await querySuggestor(uiStream, processedMessages, successfulApiKey)
+      if (querySuggestorResult.apiKey) {
+        successfulApiKey = querySuggestorResult.apiKey;
+      }
+      const relatedQueries = querySuggestorResult;
       // Add follow-up panel
       uiStream.append(
         <Section title="Follow-up">
