@@ -17,13 +17,13 @@ export function getModel(useSubModel = false) {
   const openaiApiBase = process.env.OPENAI_API_BASE
   const openaiApiKey = process.env.OPENAI_API_KEY
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
-  const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  const googleApiKeys = process.env.GOOGLE_API_KEYS?.split(',') || []
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
   if (
     !(ollamaBaseUrl && ollamaModel) &&
     !openaiApiKey &&
-    !googleApiKey &&
+    googleApiKeys.length === 0 &&
     !anthropicApiKey
   ) {
     throw new Error(
@@ -41,8 +41,23 @@ export function getModel(useSubModel = false) {
     return ollama(ollamaModel)
   }
 
-  if (googleApiKey) {
-    return google('models/gemini-2.5-flash')
+  // Google Gemini
+  if (googleApiKeys.length > 0) {
+    let apiKeyIndex = 0;
+    const getNextApiKey = () => {
+      const apiKey = googleApiKeys[apiKeyIndex % googleApiKeys.length];
+      apiKeyIndex++;
+      return apiKey;
+    };
+
+    let apiKey = getNextApiKey();
+    try {
+      return google('models/gemini-2.5-flash', { apiKey });
+    } catch (error) {
+      console.error('API Key error:', error);
+      apiKey = getNextApiKey();
+      return google('models/gemini-2.5-flash', { apiKey });
+    }
   }
 
   if (anthropicApiKey) {
