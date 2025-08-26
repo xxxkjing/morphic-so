@@ -21,7 +21,7 @@ export async function querySuggestor(
 
   let finalRelatedQueries: PartialRelated = {}
   let attempts = 0
-  const maxAttempts = (process.env.GOOGLE_API_KEYS?.split(',').length || 1) * 2; // Allow for retries
+  const maxAttempts = 1 // Allow for retries
 
   let successfulApiKey: string | undefined;
   while (attempts < maxAttempts) {
@@ -30,7 +30,7 @@ export async function querySuggestor(
       successfulApiKey = newApiKey;
       await streamObject({
         model: model,
-        system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
+        system: `Generate 3 related queries quickly.,
 
     For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
 
@@ -44,7 +44,7 @@ export async function querySuggestor(
 
     Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
     Please match the language of the response to the user's language.`,
-    messages: lastMessages,
+    messages: lastMessages.slice(-1),
     schema: relatedSchema
       })
         .then(async result => {

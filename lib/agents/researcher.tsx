@@ -65,12 +65,12 @@ export async function researcher(
     **No Hallucination**  
        If the search returns no relevant results, reply: “No reliable sources found for this query.” Do not invent facts.
     **Output Format** :
-      ## 快答(Quick Answer):
+      ## 快答(Quick Answer)
       <50 words>
 
-      ## 详细(Details):
-        • <Key point 1>
-        • <Key point 2> 
+      ## 详细(Details)
+      • <Key point 1>
+      • <Key point 2> 
 
       ## 稳定性(Confidence)
       [High | Medium | Low]

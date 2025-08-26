@@ -40,6 +40,7 @@ async function submit(
   const aiMessages = [...(retryMessages ?? aiState.get().messages)]
   // Get the messages from the state, filter out the tool messages
   const messages: CoreMessage[] = aiMessages
+    .slice(-5)
     .filter(
       message =>
         message.role !== 'tool' &&
@@ -55,7 +56,7 @@ async function submit(
   // groupId is used to group the messages for collapse
   const groupId = generateId()
 
-  const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
+  const useSpecificAPI = false
   const useOllamaProvider = !!(
     process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
   )
@@ -200,7 +201,7 @@ async function submit(
     // If useSpecificAPI is enabled, generate the answer using the specific model
     if (useSpecificAPI && answer.length === 0 && !errorOccurred) {
       // modify the messages to be used by the specific model
-      const modifiedMessages = transformToolMessages(messages)
+      const modifiedMessages = transformToolMessages(messages.slice(-3))
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
       const { response, hasError } = await writer(uiStream, latestMessages)
       answer = response
@@ -286,6 +287,7 @@ async function submit(
 
   return {
     id: generateId(),
+    isGenerating: isGenerating.value,
     isGenerating: isGenerating.value,
     component: uiStream.value,
     isCollapsed: isCollapsed.value
