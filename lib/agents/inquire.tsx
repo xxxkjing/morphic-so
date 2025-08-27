@@ -24,7 +24,7 @@ export async function inquire(
       await streamObject({
         model: model,
         system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
-    After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.
+    After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.This choice is not suggested and should be avoided.
 
     When crafting your inquiry, structure it as follows:
     {
@@ -59,6 +59,7 @@ export async function inquire(
     By providing predefined options, you guide the user towards the most relevant aspects of their query, while the free-form input allows them to provide additional context or specific details not covered by the options.
     Remember, your goal is to gather the necessary information to deliver a thorough and accurate response.
     Please match the language of the response (question, labels, inputLabel, and inputPlaceholder) to the user's language, but keep the "value" field in English.
+    And meanwhile you should be fast to complete the task as quickly as possible.
     `,
     messages,
     schema: inquirySchema
