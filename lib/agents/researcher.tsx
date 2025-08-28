@@ -42,31 +42,39 @@ export async function researcher(
       successfulApiKey = newApiKey;
       result = await streamText({
         model: model,
-        maxTokens: 800, // 进一步减少token数量以获得更快的响应速度
-        temperature: 0.1, // 降低创造性，提高速度
+        maxTokens: 2500, // 增加token数量防止回答被截断
+        temperature: 0.1,
         topP: 0.9,
         frequencyPenalty: 0.1,
-        system: `搜索专家，用简体中文回答。基于搜索结果提供准确信息，引用格式：[[数字]](url)
+        system: `你是专业搜索分析专家，用简体中文回答用户问题。
 
-Emoji 使用:
-用来突出重点，让回答结构清晰，更赏心悦目，别喧宾夺主。每个回答中至少三种，点到为止。
+**核心要求：**
+- 基于搜索结果提供准确、完整的回答
+- 每个事实都必须引用来源：[[数字]](url)
+- 回答必须完整，不能被截断
+- 使用适当emoji增强可读性（每个回答2-3个即可）
 
-Whenever quoting or referencing information from a specific URL, always explicitly cite the source URL using the [[number]](url) format. Multiple citations can be included as needed, e.g., [[number]](url), [[number]](url).
+**严格输出格式：**
+## 🔍 快速回答
+[1-2句话总结核心答案，必须包含关键信息，50字以内]
 
-输出格式：
-## 快答
-<核心回答，50字以内>
+## 📋 详细分析
+**主要观点1** 🎯
+• 具体内容描述 [[1]](url)
+• 补充细节信息 [[2]](url)
 
-## 详细
+**主要观点2** 📊
+• 具体内容描述 [[3]](url)
+• 补充细节信息 [[4]](url)
 
-• 要点1 [[1]](url)
+## 🎯 可信度评估
+**[High/Medium/Low]** - [简述原因]
 
-• 要点2 [[2]](url)
-
-## 稳定性
-[High/Medium/Low]
-
-优先速度，保持简洁。无相关搜索结果时说明"未找到可靠来源"。`,
+**格式要求：**
+- 每个部分必须完整输出，不得省略
+- 引用必须对应搜索结果编号
+- 保持结构清晰，分段合理
+- 无搜索结果时回复："暂无可靠搜索结果支持此问题"`,
     messages: processedMessages,
     tools: getTools({
       uiStream,

@@ -9,7 +9,7 @@ import { SearchResults } from '@/lib/types'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
   tool({
-    description: 'Search the web for information',
+    description: '根据用户查询智能搜索网络信息。自动分析查询意图，优化搜索关键词，获取最相关和权威的搜索结果。适合回答事实性问题、获取最新信息、查找具体数据等。',
     parameters: searchSchema,
     execute: async ({
       query,
@@ -74,12 +74,19 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
 
 async function tavilySearch(
   query: string,
-  maxResults: number = 8,
-  searchDepth: 'basic' | 'advanced' = 'advanced',
+  maxResults: number = 12,
+  searchDepth: 'basic' | 'advanced' = 'basic',
   includeDomains: string[] = [],
   excludeDomains: string[] = []
 ): Promise<any> {
   const apiKey = process.env.TAVILY_API_KEY
+  
+  // 优化搜索查询：清理无关字符，提取关键词
+  const optimizedQuery = query
+    .replace(/[？?！!。.，,]/g, ' ') // 移除标点符号
+    .replace(/\s+/g, ' ') // 合并多余空格
+    .trim()
+  
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: {
@@ -87,13 +94,14 @@ async function tavilySearch(
     },
     body: JSON.stringify({
       api_key: apiKey,
-      query,
-      max_results: Math.max(maxResults, 8), // 确保至少12个搜索结果
-      search_depth: 'advanced', // 保持基础搜索以平衡速度
-      include_images: true, // 禁用图片以提高速度
-      include_answers: true,
+      query: optimizedQuery,
+      max_results: Math.max(maxResults, 12), // 确保至少12个搜索结果
+      search_depth: searchDepth === 'advanced' ? 'advanced' : 'basic', // 根据参数选择搜索深度
+      include_images: false, // 禁用图片提高速度
+      include_answers: true, // 包含答案提高相关性
+      include_raw_content: true, // 包含原始内容
       include_domains: includeDomains,
-      exclude_domains: excludeDomains
+      exclude_domains: [...excludeDomains, 'pinterest.com', 'instagram.com', 'tiktok.com'], // 排除低质量内容
     })
   })
 
