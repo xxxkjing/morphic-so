@@ -19,8 +19,16 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
       exclude_domains
     }) => {
       let hasError = false
-      // Append the search section
+      // Append the search section with immediate loading state
       const streamResults = createStreamableValue<string>()
+      
+      // Show single loading state to reduce UI updates
+      streamResults.update(JSON.stringify({
+        loading: true,
+        query: query,
+        message: '搜索中...'
+      }))
+      
       uiStream.update(
         <SearchSection
           result={streamResults.value}
@@ -33,7 +41,9 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
         query.length < 5 ? query + ' '.repeat(5 - query.length) : query
       let searchResult
       const searchAPI: 'tavily' | 'exa' = 'tavily'
+      
       try {
+        // Direct search without intermediate progress updates
         searchResult =
           searchAPI === 'tavily'
             ? await tavilySearch(
@@ -64,8 +74,8 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
 
 async function tavilySearch(
   query: string,
-  maxResults: number = 10,
-  searchDepth: 'basic' | 'advanced' = 'basic',
+  maxResults: number = 8,
+  searchDepth: 'basic' | 'advanced' = 'advanced',
   includeDomains: string[] = [],
   excludeDomains: string[] = []
 ): Promise<any> {
@@ -78,9 +88,9 @@ async function tavilySearch(
     body: JSON.stringify({
       api_key: apiKey,
       query,
-      max_results: maxResults < 5 ? 5 : maxResults,
-      search_depth: searchDepth,
-      include_images: true,
+      max_results: Math.max(maxResults, 8), // 确保至少12个搜索结果
+      search_depth: 'advanced', // 保持基础搜索以平衡速度
+      include_images: true, // 禁用图片以提高速度
       include_answers: true,
       include_domains: includeDomains,
       exclude_domains: excludeDomains

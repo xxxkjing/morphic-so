@@ -102,11 +102,17 @@ async function submit(
   }
 
   async function processEvents() {
-    // Show the spinner
-    uiStream.append(<Spinner />)
+    // 简化loading状态，减少UI更新次数
+    const loadingState = createStreamableUI()
+    loadingState.update(<div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Spinner />
+      <span>搜索中...</span>
+    </div>)
+    uiStream.append(loadingState.value)
 
     let successfulApiKey: string | undefined;
     let action: any = { object: { next: 'proceed' } }
+    
     // If the user skips the task, we proceed to the search
     if (!skip) {
       action = (await taskManager(messages, successfulApiKey)) ?? action
@@ -122,6 +128,7 @@ async function submit(
         successfulApiKey = inquiryResult.apiKey;
       }
       const inquiry = inquiryResult;
+      loadingState.done()
       uiStream.done()
       isGenerating.done()
       isCollapsed.done(false)
@@ -139,6 +146,9 @@ async function submit(
       })
       return
     }
+
+    // 直接结束loading状态，减少UI更新
+    loadingState.done()
 
     // Set the collapsed state to true
     isCollapsed.done(true)
@@ -287,7 +297,6 @@ async function submit(
 
   return {
     id: generateId(),
-    isGenerating: isGenerating.value,
     isGenerating: isGenerating.value,
     component: uiStream.value,
     isCollapsed: isCollapsed.value

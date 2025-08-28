@@ -6,6 +6,7 @@ export const searchSchema = z.object({
   max_results: z.number().describe('The maximum number of results to return'),
   search_depth: z
     .enum(['basic', 'advanced'])
+    .default('basic')
     .describe('The depth of the search'),
   include_domains: z
     .array(z.string())

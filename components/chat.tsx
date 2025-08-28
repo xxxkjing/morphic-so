@@ -16,8 +16,11 @@ export function Chat({ id, query }: ChatProps) {
   const [messages] = useUIState()
 
   useEffect(() => {
-    if (!path.includes('search') && messages.length === 1) {
-      window.history.replaceState({}, '', `/search/${id}`)
+    // Only update URL if we're not already on a search page
+    // and we have messages but no query in the current URL
+    if (!path.includes('search') && messages.length === 1 && query) {
+      const urlPath = `/search?q=${encodeURIComponent(query)}`
+      window.history.replaceState({}, '', urlPath)
     }
   }, [id, path, messages, query])
 

@@ -32,6 +32,10 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   async function handleQuerySubmit(query: string, formData?: FormData) {
     setInput(query)
     setIsGenerating(true)
+    
+    // Update URL to show search query immediately
+    const searchUrl = `/search?q=${encodeURIComponent(query)}`
+    window.history.pushState({}, '', searchUrl)
 
     // Add user message to UI state
     setMessages(currentMessages => [
