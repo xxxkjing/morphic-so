@@ -26,7 +26,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
       streamResults.update(JSON.stringify({
         loading: true,
         query: query,
-        message: '搜索中...'
+        message: '正在生成搜索脚本...'
       }))
       
       uiStream.update(
@@ -74,7 +74,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
 
 async function tavilySearch(
   query: string,
-  maxResults: number = 12,
+  maxResults: number = 6,
   searchDepth: 'basic' | 'advanced' = 'advanced',
   includeDomains: string[] = [],
   excludeDomains: string[] = []
@@ -95,7 +95,7 @@ async function tavilySearch(
     body: JSON.stringify({
       api_key: apiKey,
       query: optimizedQuery,
-      max_results: Math.max(maxResults, 12), // 确保至少12个搜索结果
+      max_results: Math.max(maxResults, 6), // 确保至少12个搜索结果
       search_depth: searchDepth === 'advanced' ? 'advanced' : 'advanced', // 根据参数选择搜索深度
       include_images: true, // 禁用图片提高速度
       include_answers: true, // 包含答案提高相关性
