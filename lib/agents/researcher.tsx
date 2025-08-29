@@ -42,7 +42,7 @@ export async function researcher(
       successfulApiKey = newApiKey;
       result = await streamText({
         model: model,
-        maxTokens: 2500, // 增加token数量防止回答被截断
+        maxTokens: 7500, // 增加token数量防止回答被截断
         temperature: 0.1,
         topP: 0.9,
         frequencyPenalty: 0.1,
