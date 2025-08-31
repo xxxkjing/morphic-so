@@ -106,7 +106,7 @@ async function submit(
     const loadingState = createStreamableUI()
     loadingState.update(<div className="flex items-center gap-2 text-sm text-muted-foreground">
       <Spinner />
-      <span>搜索中...</span>
+      <span>正在生成索引...</span>
     </div>)
     uiStream.append(loadingState.value)
 
