@@ -184,12 +184,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
             <ArrowRight size={20} />
           </Button>
         </div>
-        <EmptyScreen
-          submitMessage={message => {
-            setInput(message)
-          }}
-          className={cn(showEmptyScreen ? 'visible' : 'invisible')}
-        />
+        
       </form>
     </div>
   )
