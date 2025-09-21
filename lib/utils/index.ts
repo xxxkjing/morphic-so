@@ -51,7 +51,7 @@ export function getModel(useSubModel = false, apiKey?: string) {
     }
     
     const google = createGoogleGenerativeAI({ apiKey: selectedApiKey });
-    return { model: google('models/gemini-2.5-flash'), apiKey: selectedApiKey };
+    return { model: google('models/gemini-2.0-flash-lite-preview'), apiKey: selectedApiKey };
   }
 
   if (anthropicApiKey) {
