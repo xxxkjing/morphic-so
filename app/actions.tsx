@@ -24,6 +24,7 @@ import { VideoSearchSection } from '@/components/video-search-section'
 import { transformToolMessages } from '@/lib/utils'
 import { AnswerSection } from '@/components/answer-section'
 import { ErrorCard } from '@/components/error-card'
+import { withTimeout, createFallbackResponse } from '@/lib/utils/timeout'
 
 async function submit(
   formData?: FormData,
@@ -293,7 +294,15 @@ async function submit(
     uiStream.done()
   }
 
-  processEvents()
+  const timeoutPromise = new Promise(resolve =>
+    setTimeout(() => {
+      isGenerating.done(false)
+      uiStream.done(createFallbackResponse(messages))
+      resolve(null)
+    }, 8000)
+  )
+
+  Promise.race([processEvents(), timeoutPromise])
 
   return {
     id: generateId(),
