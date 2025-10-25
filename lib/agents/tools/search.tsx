@@ -6,7 +6,7 @@ import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
 import { sanitizeUrl } from '@/lib/utils'
 import { SearchResults, SearchResultItem } from '@/lib/types'
-import { withTimeout } from '../../utils/withTimeout'
+import { withTimeout } from '@/lib/utils/timeout'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
   tool({
@@ -40,7 +40,8 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
               include_domains,
               exclude_domains
             ),
-            3000
+            4000,
+            { images: [], results: [], query: filledQuery }
           ),
           withTimeout(
             exaSearch(
@@ -49,7 +50,8 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
               include_domains,
               exclude_domains
             ),
-            3000
+            4000,
+            { images: [], results: [], query }
           )
         ])
 
@@ -117,6 +119,8 @@ async function tavilySearch(
   excludeDomains: string[] = []
 ): Promise<SearchResults> {
   const apiKey = process.env.TAVILY_API_KEY
+  const controller = new AbortController()
+  const signal = controller.signal
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -128,7 +132,8 @@ async function tavilySearch(
       include_raw_content: true,
       include_domains: includeDomains,
       exclude_domains: excludeDomains
-    })
+    }),
+    signal
   })
 
   if (!response.ok) {
@@ -150,22 +155,36 @@ async function exaSearch(
 ): Promise<SearchResults> {
   const apiKey = process.env.EXA_API_KEY
   const exa = new Exa(apiKey)
-  const exaResults = await exa.searchAndContents(query, {
-    highlights: true,
-    numResults: maxResults,
-    includeDomains,
-    excludeDomains
-  })
+  const controller = new AbortController()
+  const signal = controller.signal
 
-  const results: SearchResultItem[] = exaResults.results.map((result: any) => ({
-    title: result.title || '',
-    url: result.url,
-    content: result.text || ''
-  }))
+  const timer = setTimeout(() => {
+    controller.abort()
+  }, 4000)
 
-  return {
-    images: [],
-    results,
-    query
+  try {
+    const exaResults = await exa.searchAndContents(query, {
+      highlights: true,
+      numResults: maxResults,
+      includeDomains,
+      excludeDomains
+    })
+
+    clearTimeout(timer)
+
+    const results: SearchResultItem[] = exaResults.results.map((result: any) => ({
+      title: result.title || '',
+      url: result.url,
+      content: result.text || ''
+    }))
+
+    return {
+      images: [],
+      results,
+      query
+    }
+  } catch (error) {
+    clearTimeout(timer)
+    throw error
   }
 }
